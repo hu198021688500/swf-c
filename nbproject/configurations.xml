@@ -29,6 +29,7 @@
     <logicalFolder name="ResourceFiles" displayName="资源文件" projectFiles="true">
       <itemPath>datrie.abm</itemPath>
       <itemPath>datrie.list</itemPath>
+      <itemPath>newfile</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="测试文件"
