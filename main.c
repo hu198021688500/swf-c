@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   main.c
  * Author: hadoop
  *
@@ -8,11 +8,11 @@
 #include "trietool.h"
 
 /*
- * 
+ *
  */
 int main(int argc, char **argv) {
 
-    ProgEnv env;
+    ProgEnv env; 
     init_program_env(argc, argv, &env);
     init_sock_accept_env(&env);
     program_exit(&env);
