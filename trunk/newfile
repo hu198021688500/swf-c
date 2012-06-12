@@ -1,1 +1,4 @@
 qx7AY7gZ9Ax7
+
+kern.maxfiles=40000
+kern.maxfilesperproc=40000
