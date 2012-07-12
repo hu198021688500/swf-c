@@ -2,28 +2,16 @@
 <configurationDescriptor version="80">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <logicalFolder name="HeaderFiles" displayName="头文件" projectFiles="true">
-      <itemPath>alpha-map-private.h</itemPath>
-      <itemPath>alpha-map.h</itemPath>
       <itemPath>argv.h</itemPath>
       <itemPath>config.h</itemPath>
-      <itemPath>darray.h</itemPath>
       <itemPath>fileutils.h</itemPath>
-      <itemPath>tail.h</itemPath>
-      <itemPath>trie-private.h</itemPath>
-      <itemPath>trie.h</itemPath>
-      <itemPath>triedefs.h</itemPath>
       <itemPath>trietool.h</itemPath>
-      <itemPath>typedefs.h</itemPath>
       <itemPath>utarray.h</itemPath>
     </logicalFolder>
     <logicalFolder name="SourceFiles" displayName="源文件" projectFiles="true">
-      <itemPath>alpha-map.c</itemPath>
       <itemPath>argv.c</itemPath>
-      <itemPath>darray.c</itemPath>
       <itemPath>fileutils.c</itemPath>
       <itemPath>main.c</itemPath>
-      <itemPath>tail.c</itemPath>
-      <itemPath>trie.c</itemPath>
       <itemPath>trietool.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles" displayName="资源文件" projectFiles="true">
@@ -50,6 +38,16 @@
         <compilerSet>default</compilerSet>
       </toolsSet>
       <compileType>
+        <cTool>
+          <incDir>
+            <pElem>/usr/include/datrie</pElem>
+          </incDir>
+        </cTool>
+        <linkerTool>
+          <linkerLibItems>
+            <linkerOptionItem>`pkg-config --libs datrie-0.2`</linkerOptionItem>
+          </linkerLibItems>
+        </linkerTool>
       </compileType>
     </conf>
     <conf name="Release" type="1">

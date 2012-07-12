@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   trietool.h
  * Author: hadoop
  *
@@ -9,8 +9,8 @@
 #define	TRIETOOL_H
 
 #include <iconv.h>
+#include <trie.h>
 
-#include "trie.h"
 #include "utarray.h"
 
 typedef struct {
