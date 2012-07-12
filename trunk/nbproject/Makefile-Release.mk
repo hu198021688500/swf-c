@@ -37,11 +37,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/trietool.o \
 	${OBJECTDIR}/argv.o \
 	${OBJECTDIR}/fileutils.o \
-	${OBJECTDIR}/alpha-map.o \
-	${OBJECTDIR}/darray.o \
-	${OBJECTDIR}/trie.o \
-	${OBJECTDIR}/main.o \
-	${OBJECTDIR}/tail.o
+	${OBJECTDIR}/main.o
 
 
 # C Compiler Flags
@@ -83,30 +79,10 @@ ${OBJECTDIR}/fileutils.o: fileutils.c
 	${RM} $@.d
 	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/fileutils.o fileutils.c
 
-${OBJECTDIR}/alpha-map.o: alpha-map.c 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/alpha-map.o alpha-map.c
-
-${OBJECTDIR}/darray.o: darray.c 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/darray.o darray.c
-
-${OBJECTDIR}/trie.o: trie.c 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/trie.o trie.c
-
 ${OBJECTDIR}/main.o: main.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/main.o main.c
-
-${OBJECTDIR}/tail.o: tail.c 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/tail.o tail.c
 
 # Subprojects
 .build-subprojects:

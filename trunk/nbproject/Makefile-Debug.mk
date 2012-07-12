@@ -37,11 +37,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/trietool.o \
 	${OBJECTDIR}/argv.o \
 	${OBJECTDIR}/fileutils.o \
-	${OBJECTDIR}/alpha-map.o \
-	${OBJECTDIR}/darray.o \
-	${OBJECTDIR}/trie.o \
-	${OBJECTDIR}/main.o \
-	${OBJECTDIR}/tail.o
+	${OBJECTDIR}/main.o
 
 
 # C Compiler Flags
@@ -58,7 +54,7 @@ FFLAGS=
 ASFLAGS=
 
 # Link Libraries and Options
-LDLIBSOPTIONS=
+LDLIBSOPTIONS=`pkg-config --libs datrie-0.2`  
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}
@@ -71,42 +67,22 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/swf-c: ${OBJECTFILES}
 ${OBJECTDIR}/trietool.o: trietool.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
-	$(COMPILE.c) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/trietool.o trietool.c
+	$(COMPILE.c) -g -I/usr/include/datrie `pkg-config --cflags datrie-0.2`    -MMD -MP -MF $@.d -o ${OBJECTDIR}/trietool.o trietool.c
 
 ${OBJECTDIR}/argv.o: argv.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
-	$(COMPILE.c) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/argv.o argv.c
+	$(COMPILE.c) -g -I/usr/include/datrie `pkg-config --cflags datrie-0.2`    -MMD -MP -MF $@.d -o ${OBJECTDIR}/argv.o argv.c
 
 ${OBJECTDIR}/fileutils.o: fileutils.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
-	$(COMPILE.c) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/fileutils.o fileutils.c
-
-${OBJECTDIR}/alpha-map.o: alpha-map.c 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.c) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/alpha-map.o alpha-map.c
-
-${OBJECTDIR}/darray.o: darray.c 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.c) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/darray.o darray.c
-
-${OBJECTDIR}/trie.o: trie.c 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.c) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/trie.o trie.c
+	$(COMPILE.c) -g -I/usr/include/datrie `pkg-config --cflags datrie-0.2`    -MMD -MP -MF $@.d -o ${OBJECTDIR}/fileutils.o fileutils.c
 
 ${OBJECTDIR}/main.o: main.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
-	$(COMPILE.c) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/main.o main.c
-
-${OBJECTDIR}/tail.o: tail.c 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.c) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/tail.o tail.c
+	$(COMPILE.c) -g -I/usr/include/datrie `pkg-config --cflags datrie-0.2`    -MMD -MP -MF $@.d -o ${OBJECTDIR}/main.o main.c
 
 # Subprojects
 .build-subprojects:

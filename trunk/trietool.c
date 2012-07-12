@@ -119,7 +119,7 @@ init_conv(ProgEnv *env) {
  * @param in
  * @param out
  * @param out_size
- * @return 
+ * @return
  */
 size_t
 conv_to_alpha(const char *in, AlphaChar *out, size_t out_size, ProgEnv *env) {
@@ -154,7 +154,7 @@ conv_to_alpha(const char *in, AlphaChar *out, size_t out_size, ProgEnv *env) {
  * @param in
  * @param out
  * @param out_size
- * @return 
+ * @return
  */
 size_t
 conv_from_alpha(const AlphaChar *in, char *out, size_t out_size, ProgEnv *env) {
@@ -187,10 +187,10 @@ close_conv(ProgEnv *env) {
  * 获取分隔符的位置
  * 获取原始字符窜的长度
  * 获取替换字符窜的长度
- * @param str 
+ * @param str
  * @param ori_word_len
  * @param replace_word_len
- * @return 
+ * @return
  */
 char *
 get_word_pair_info(char *str, unsigned *ori_word_len, unsigned *replace_word_len) {
@@ -220,7 +220,7 @@ get_word_pair_info(char *str, unsigned *ori_word_len, unsigned *replace_word_len
 /**
  * 初始化搜索树
  * @param env
- * @return 
+ * @return
  */
 void
 prepare_trie(ProgEnv * env) {
@@ -266,7 +266,7 @@ prepare_trie(ProgEnv * env) {
  * @param argc 参数个数
  * @param argv 参数数组
  * @param env 程序环境
- * @return 
+ * @return
  */
 void
 decode_switch(ProgEnv * env, int argc, char *argv[]) {
@@ -579,7 +579,7 @@ command_replace(int argc, char *argv[], ProgEnv *env) {
             trie_state_walk(s, *p++);
         }
         if (trie_state_is_terminal(s)) {
-            TrieData index = (int) trie_from_state_get_data(s);
+            TrieData index = (int) trie_state_get_data(s);
             word_pair *p_word_pair = (word_pair*) utarray_eltptr(env->replace_words, (int) index);
             if (p_word_pair != NULL) {
                 int offset = tmp - text_alpha;
