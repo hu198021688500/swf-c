@@ -9,7 +9,7 @@
 #define	TRIETOOL_H
 
 #include <iconv.h>
-#include <trie.h>
+#include <datrie/trie.h>
 
 #include "utarray.h"
 
