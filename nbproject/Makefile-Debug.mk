@@ -36,7 +36,6 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 OBJECTFILES= \
 	${OBJECTDIR}/trietool.o \
 	${OBJECTDIR}/argv.o \
-	${OBJECTDIR}/fileutils.o \
 	${OBJECTDIR}/main.o
 
 
@@ -54,11 +53,13 @@ FFLAGS=
 ASFLAGS=
 
 # Link Libraries and Options
-LDLIBSOPTIONS=`pkg-config --libs datrie-0.2`  
+LDLIBSOPTIONS=/usr/local/application/libdatrie-0.2.5/lib/libdatrie.so
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}
 	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/swf-c
+
+${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/swf-c: /usr/local/application/libdatrie-0.2.5/lib/libdatrie.so
 
 ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/swf-c: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
@@ -67,22 +68,17 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/swf-c: ${OBJECTFILES}
 ${OBJECTDIR}/trietool.o: trietool.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
-	$(COMPILE.c) -g -I/usr/include/datrie `pkg-config --cflags datrie-0.2`    -MMD -MP -MF $@.d -o ${OBJECTDIR}/trietool.o trietool.c
+	$(COMPILE.c) -g -I/usr/local/application/libdatrie-0.2.5/include -MMD -MP -MF $@.d -o ${OBJECTDIR}/trietool.o trietool.c
 
 ${OBJECTDIR}/argv.o: argv.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
-	$(COMPILE.c) -g -I/usr/include/datrie `pkg-config --cflags datrie-0.2`    -MMD -MP -MF $@.d -o ${OBJECTDIR}/argv.o argv.c
-
-${OBJECTDIR}/fileutils.o: fileutils.c 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.c) -g -I/usr/include/datrie `pkg-config --cflags datrie-0.2`    -MMD -MP -MF $@.d -o ${OBJECTDIR}/fileutils.o fileutils.c
+	$(COMPILE.c) -g -I/usr/local/application/libdatrie-0.2.5/include -MMD -MP -MF $@.d -o ${OBJECTDIR}/argv.o argv.c
 
 ${OBJECTDIR}/main.o: main.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
-	$(COMPILE.c) -g -I/usr/include/datrie `pkg-config --cflags datrie-0.2`    -MMD -MP -MF $@.d -o ${OBJECTDIR}/main.o main.c
+	$(COMPILE.c) -g -I/usr/local/application/libdatrie-0.2.5/include -MMD -MP -MF $@.d -o ${OBJECTDIR}/main.o main.c
 
 # Subprojects
 .build-subprojects:

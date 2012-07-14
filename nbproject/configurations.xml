@@ -4,13 +4,11 @@
     <logicalFolder name="HeaderFiles" displayName="头文件" projectFiles="true">
       <itemPath>argv.h</itemPath>
       <itemPath>config.h</itemPath>
-      <itemPath>fileutils.h</itemPath>
       <itemPath>trietool.h</itemPath>
       <itemPath>utarray.h</itemPath>
     </logicalFolder>
     <logicalFolder name="SourceFiles" displayName="源文件" projectFiles="true">
       <itemPath>argv.c</itemPath>
-      <itemPath>fileutils.c</itemPath>
       <itemPath>main.c</itemPath>
       <itemPath>trietool.c</itemPath>
     </logicalFolder>
@@ -40,12 +38,13 @@
       <compileType>
         <cTool>
           <incDir>
-            <pElem>/usr/include/datrie</pElem>
+            <pElem>/usr/local/application/libdatrie-0.2.5/include</pElem>
           </incDir>
         </cTool>
         <linkerTool>
+          <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/swf-c</output>
           <linkerLibItems>
-            <linkerOptionItem>`pkg-config --libs datrie-0.2`</linkerOptionItem>
+            <linkerLibFileItem>/usr/local/application/libdatrie-0.2.5/lib/libdatrie.so</linkerLibFileItem>
           </linkerLibItems>
         </linkerTool>
       </compileType>

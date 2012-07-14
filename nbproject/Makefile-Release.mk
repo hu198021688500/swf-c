@@ -36,7 +36,6 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 OBJECTFILES= \
 	${OBJECTDIR}/trietool.o \
 	${OBJECTDIR}/argv.o \
-	${OBJECTDIR}/fileutils.o \
 	${OBJECTDIR}/main.o
 
 
@@ -73,11 +72,6 @@ ${OBJECTDIR}/argv.o: argv.c
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/argv.o argv.c
-
-${OBJECTDIR}/fileutils.o: fileutils.c 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/fileutils.o fileutils.c
 
 ${OBJECTDIR}/main.o: main.c 
 	${MKDIR} -p ${OBJECTDIR}
