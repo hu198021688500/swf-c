@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="80">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <logicalFolder name="HeaderFiles" displayName="头文件" projectFiles="true">
+      <itemPath>argv.h</itemPath>
+      <itemPath>config.h</itemPath>
+      <itemPath>trietool.h</itemPath>
+      <itemPath>utarray.h</itemPath>
+    </logicalFolder>
+    <logicalFolder name="SourceFiles" displayName="源文件" projectFiles="true">
+      <itemPath>argv.c</itemPath>
+      <itemPath>fileutils.c</itemPath>
+      <itemPath>main.c</itemPath>
+    </logicalFolder>
+    <logicalFolder name="ResourceFiles" displayName="资源文件" projectFiles="true">
+      <itemPath>datrie.abm</itemPath>
+      <itemPath>datrie.list</itemPath>
+    </logicalFolder>
+    <logicalFolder name="TestFiles"
+                   displayName="测试文件"
+                   projectFiles="false"
+                   kind="TEST_LOGICAL_FOLDER">
+    </logicalFolder>
+    <logicalFolder name="ExternalFiles"
+                   displayName="重要文件"
+                   projectFiles="false"
+                   kind="IMPORTANT_FILES_FOLDER">
+      <itemPath>Makefile</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Debug" type="1">
+      <toolsSet>
+        <remote-sources-mode>LOCAL_SOURCES</remote-sources-mode>
+        <compilerSet>default</compilerSet>
+      </toolsSet>
+      <compileType>
+        <cTool>
+          <incDir>
+            <pElem>/usr/local/application/libdatrie-0.2.5/include</pElem>
+          </incDir>
+        </cTool>
+        <linkerTool>
+          <linkerLibItems>
+            <linkerLibFileItem>/usr/local/application/libdatrie-0.2.5/lib/libdatrie.so</linkerLibFileItem>
+          </linkerLibItems>
+        </linkerTool>
+      </compileType>
+    </conf>
+    <conf name="Release" type="1">
+      <toolsSet>
+        <remote-sources-mode>LOCAL_SOURCES</remote-sources-mode>
+        <compilerSet>default</compilerSet>
+      </toolsSet>
+      <compileType>
+        <cTool>
+          <developmentMode>5</developmentMode>
+        </cTool>
+        <ccTool>
+          <developmentMode>5</developmentMode>
+        </ccTool>
+        <fortranCompilerTool>
+          <developmentMode>5</developmentMode>
+        </fortranCompilerTool>
+        <asmTool>
+          <developmentMode>5</developmentMode>
+        </asmTool>
+      </compileType>
+    </conf>
+  </confs>
+</configurationDescriptor>
