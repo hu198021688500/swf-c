@@ -34,8 +34,8 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
+	${OBJECTDIR}/trietool.o \
 	${OBJECTDIR}/argv.o \
-	${OBJECTDIR}/fileutils.o \
 	${OBJECTDIR}/main.o
 
 
@@ -63,15 +63,15 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/swf-c: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
 	${LINK.c} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/swf-c ${OBJECTFILES} ${LDLIBSOPTIONS} 
 
+${OBJECTDIR}/trietool.o: trietool.c 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/trietool.o trietool.c
+
 ${OBJECTDIR}/argv.o: argv.c 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/argv.o argv.c
-
-${OBJECTDIR}/fileutils.o: fileutils.c 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/fileutils.o fileutils.c
 
 ${OBJECTDIR}/main.o: main.c 
 	${MKDIR} -p ${OBJECTDIR}

@@ -9,12 +9,13 @@
     </logicalFolder>
     <logicalFolder name="SourceFiles" displayName="源文件" projectFiles="true">
       <itemPath>argv.c</itemPath>
-      <itemPath>fileutils.c</itemPath>
       <itemPath>main.c</itemPath>
+      <itemPath>trietool.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles" displayName="资源文件" projectFiles="true">
       <itemPath>datrie.abm</itemPath>
       <itemPath>datrie.list</itemPath>
+      <itemPath>datrie_1.abm</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="测试文件"
@@ -38,12 +39,12 @@
       <compileType>
         <cTool>
           <incDir>
-            <pElem>/usr/local/application/libdatrie-0.2.5/include</pElem>
+            <pElem>/usr/include/datrie</pElem>
           </incDir>
         </cTool>
         <linkerTool>
           <linkerLibItems>
-            <linkerLibFileItem>/usr/local/application/libdatrie-0.2.5/lib/libdatrie.so</linkerLibFileItem>
+            <linkerOptionItem>`pkg-config --libs datrie-0.2`</linkerOptionItem>
           </linkerLibItems>
         </linkerTool>
       </compileType>
