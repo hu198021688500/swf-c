@@ -59,10 +59,14 @@ init_program_env(int argc, char **argv, ProgEnv *env) {
 
     FILE *fp;
     if ((fp = fopen(file_name, "r")) != NULL) {
-        char line[MAX_LINE_LEN] = {'\0'};
-        while (fgets(line, MAX_LINE_LEN, fp)) {
-            char *argv[] = {line};
-            command_add(1, argv, env);
+        char ori_word[MAX_LINE_LEN] = {'\0'};
+        char replace_word[MAX_LINE_LEN] = {'\0'};
+        while (fgets(ori_word, MAX_LINE_LEN, fp)) {
+            if (fgets(replace_word, MAX_LINE_LEN, fp)) {
+                char *argv[] = {ori_word, replace_word};
+                command_add(2, argv, env);
+            }
+
         }
     }
     fclose(fp);
@@ -329,42 +333,45 @@ int
 command_add(int argc, char *argv[], ProgEnv *env) {
     int index = 0;
     while (index < argc) {
-        char *str = argv[index++], *delimPos = NULL;
-        unsigned int ori_word_len = 0, replace_word_len = 1;
-        delimPos = get_word_pair_info(str, &ori_word_len, &replace_word_len);
-        if (delimPos != NULL) {
-            char *ori_word = (char *) calloc(ori_word_len, sizeof (char));
-            if (ori_word == NULL) {
-                write_log(LOG_NOTICE, DEBUG_ARGS_FORMAT"Out of memory", DEBUG_ARGS_VALUE);
-                return FALSE;
-            }
-            char *replace_word = (char *) calloc(replace_word_len, sizeof (char));
-            if (replace_word == NULL) {
-                write_log(LOG_NOTICE, DEBUG_ARGS_FORMAT"Out of memory", DEBUG_ARGS_VALUE);
-                return FALSE;
-            }
+        char *ori_word_temp = argv[index++];
+        char *replace_word_temp = argv[index++];
 
-            TrieData data;
-            AlphaChar word_alpha[MAX_WORD_LEN] = {0};
+        int ori_word_len = strlen(ori_word_temp);
+        int replace_word_len = strlen(replace_word_temp);
 
-            snprintf(ori_word, sizeof (ori_word), "%s", str);
-            snprintf(replace_word, sizeof (replace_word), "%s", delimPos + 1);
-
-            data = (TrieData) utarray_len(env->replace_words);
-            conv_to_alpha(ori_word, word_alpha, N_ELEMENTS(word_alpha), env);
-
-            if (!trie_store(env->trie, word_alpha, data)) {
-                write_log(LOG_NOTICE, DEBUG_ARGS_FORMAT"Failed to add entry '%s' with data %d", DEBUG_ARGS_VALUE, ori_word, data);
-            } else {
-                word_pair word_data;
-                word_data.ori_str = ori_word;
-                word_data.replace_str = replace_word;
-                utarray_push_back(env->replace_words, &word_data);
-                return TRUE;
-            }
-        } else {
-            write_log(LOG_NOTICE, DEBUG_ARGS_FORMAT"Did not find the delimiter in (%s)", DEBUG_ARGS_VALUE, str);
+        char *ori_word = (char *) calloc(ori_word_len + 1, sizeof (char));
+        if (ori_word == NULL) {
+            write_log(LOG_NOTICE, DEBUG_ARGS_FORMAT"Out of memory", DEBUG_ARGS_VALUE);
+            return FALSE;
         }
+        char *replace_word = (char *) calloc(replace_word_len + 1, sizeof (char));
+        if (replace_word == NULL) {
+            write_log(LOG_NOTICE, DEBUG_ARGS_FORMAT"Out of memory", DEBUG_ARGS_VALUE);
+            return FALSE;
+        }
+
+        TrieData data;
+        AlphaChar word_alpha[MAX_WORD_LEN] = {0};
+
+        snprintf(ori_word, ori_word_len, "%s", ori_word_temp);
+        snprintf(replace_word, replace_word_len, "%s", replace_word_temp);
+
+        ori_word[ori_word_len] = '\0';
+        replace_word[replace_word_len] = '\0';
+
+        data = (TrieData) utarray_len(env->replace_words);
+        conv_to_alpha(ori_word, word_alpha, N_ELEMENTS(word_alpha), env);
+
+        if (!trie_store(env->trie, word_alpha, data)) {
+            write_log(LOG_NOTICE, DEBUG_ARGS_FORMAT"Failed to add entry '%s' with data %d", DEBUG_ARGS_VALUE, ori_word, data);
+        } else {
+            word_pair word_data;
+            word_data.ori_str = ori_word;
+            word_data.replace_str = replace_word;
+            utarray_push_back(env->replace_words, &word_data);
+            return TRUE;
+        }
+
     }
 
     return index;
@@ -580,6 +587,7 @@ command_replace(int argc, char *argv[], ProgEnv *env) {
         }
         if (trie_state_is_terminal(s)) {
             TrieData index = (int) trie_state_get_data(s);
+            printf("index:%d\n", index);
             word_pair *p_word_pair = (word_pair*) utarray_eltptr(env->replace_words, (int) index);
             if (p_word_pair != NULL) {
                 int offset = tmp - text_alpha;
