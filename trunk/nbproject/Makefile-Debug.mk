@@ -34,7 +34,6 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
-	${OBJECTDIR}/trietool.o \
 	${OBJECTDIR}/argv.o \
 	${OBJECTDIR}/main.o
 
@@ -62,11 +61,6 @@ LDLIBSOPTIONS=`pkg-config --libs datrie-0.2`
 ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/swf-c: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
 	${LINK.c} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/swf-c ${OBJECTFILES} ${LDLIBSOPTIONS} 
-
-${OBJECTDIR}/trietool.o: trietool.c 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.c) -g -I/usr/include/datrie `pkg-config --cflags datrie-0.2`    -MMD -MP -MF $@.d -o ${OBJECTDIR}/trietool.o trietool.c
 
 ${OBJECTDIR}/argv.o: argv.c 
 	${MKDIR} -p ${OBJECTDIR}

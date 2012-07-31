@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   utarray.h
  * Author: hadoop
  *
@@ -6,14 +6,14 @@
  */
 
 #ifndef UTARRAY_H
-#define	UTARRAY_H
+#define UTARRAY_H
 
 #define UTARRAY_VERSION 1.9.6
 
 #ifdef __GNUC__
-#define _UNUSED_ __attribute__ ((__unused__)) 
+#define _UNUSED_ __attribute__ ((__unused__))
 #else
-#define _UNUSED_ 
+#define _UNUSED_
 #endif
 
 #include <stddef.h>
@@ -172,7 +172,7 @@ typedef struct {
 #define utarray_renew(a,u) do {                                               \
   if (a) utarray_clear(a); \
   else utarray_new((a),(u));   \
-} while(0) 
+} while(0)
 
 #define utarray_clear(a) do {                                                 \
   if ((a)->i > 0) {                                                           \
@@ -211,5 +211,4 @@ static const UT_icd ut_str_icd _UNUSED_ = {sizeof (char*), NULL, utarray_str_cpy
 static const UT_icd ut_int_icd _UNUSED_ = {sizeof (int), NULL, NULL, NULL};
 static const UT_icd ut_ptr_icd _UNUSED_ = {sizeof (void*), NULL, NULL, NULL};
 
-#endif	/* UTARRAY_H */
-
+#endif  /* UTARRAY_H */

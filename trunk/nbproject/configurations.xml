@@ -4,18 +4,16 @@
     <logicalFolder name="HeaderFiles" displayName="头文件" projectFiles="true">
       <itemPath>argv.h</itemPath>
       <itemPath>config.h</itemPath>
-      <itemPath>trietool.h</itemPath>
-      <itemPath>utarray.h</itemPath>
     </logicalFolder>
     <logicalFolder name="SourceFiles" displayName="源文件" projectFiles="true">
       <itemPath>argv.c</itemPath>
       <itemPath>main.c</itemPath>
-      <itemPath>trietool.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles" displayName="资源文件" projectFiles="true">
       <itemPath>datrie.abm</itemPath>
       <itemPath>datrie.list</itemPath>
       <itemPath>datrie_1.abm</itemPath>
+      <itemPath>datrie_1.list</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="测试文件"
