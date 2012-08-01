@@ -3,7 +3,6 @@
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <logicalFolder name="HeaderFiles" displayName="头文件" projectFiles="true">
       <itemPath>argv.h</itemPath>
-      <itemPath>config.h</itemPath>
       <itemPath>utarray.h</itemPath>
     </logicalFolder>
     <logicalFolder name="SourceFiles" displayName="源文件" projectFiles="true">

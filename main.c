@@ -1,32 +1,25 @@
-/* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
-/*
- * trietool.c - Trie manipulation tool
- * Created: 2006-08-15
- * Author:  Theppitak Karoonboonyanan <thep@linux.thai.net>
- */
-
-#include "config.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <locale.h>
+
+#define VERSION "0.2.5"
+#define HAVE_LANGINFO_CODESET 1
 #if defined(HAVE_LOCALE_CHARSET)
 #include <localcharset.h>
 #elif defined (HAVE_LANGINFO_CODESET)
 #include <langinfo.h>
 #define locale_charset()  nl_langinfo(CODESET)
 #endif
+
 #include <iconv.h>
-
 #include <assert.h>
-
 #include <datrie/trie.h>
 
 #include "argv.h"
 #include "utarray.h"
 
-/* iconv encoding name for AlphaChar string */
 #define ALPHA_ENC   "UCS-4LE"
 
 #define N_ELEMENTS(a)   (sizeof(a)/sizeof((a)[0]))
@@ -35,14 +28,15 @@
 #define MAX_WORD_LEN    20
 #define MAX_LINE_LEN    20*2+1
 #define MAX_TEXT_LEN    1024
+#define MAX_CMD_LEN     1024 + 100
 #define FILE_NAME_LEN   256
 
 typedef struct {
+    Trie *trie;
     const char *path;
     const char *trie_name;
     iconv_t to_alpha_conv;
     iconv_t from_alpha_conv;
-    Trie *trie;
     UT_array *replace_words;
 } ProgEnv;
 
@@ -55,7 +49,6 @@ typedef struct {
     word_str ori_str;
     word_str replace_str;
 } word_pair;
-
 
 static void init_conv(ProgEnv *env);
 static size_t conv_to_alpha(ProgEnv *env, const char *in, AlphaChar *out, size_t out_size);
@@ -82,11 +75,11 @@ static char *string_trim(char *s);
 
 static void accept_command(ProgEnv *env);
 
-static int text_alpha_replace_word(AlphaChar *text_alpha, const word_pair *word_pair, const int offset);
+static int text_alpha_replace(AlphaChar *text_alpha, const word_pair *word_pair, const int offset);
 
 int main(int argc, char *argv[]) {
-    int i, ret;
     ProgEnv env;
+    int i = 0, ret = 0;
 
     env.path = ".";
 
@@ -104,7 +97,8 @@ int main(int argc, char *argv[]) {
     UT_icd word_pair_icd = {sizeof (word_pair), NULL, NULL, NULL};
     utarray_new(env.replace_words, &word_pair_icd);
 
-    //ret = decode_command (argc - i, argv + i, &env);
+    ret = decode_command(argc - i, argv + i, &env);
+
     accept_command(&env);
 
     if (close_trie(&env) != 0)
@@ -115,12 +109,9 @@ int main(int argc, char *argv[]) {
     return ret;
 }
 
-static void
-accept_command(ProgEnv *env) {
-    int argc;
-    char **argv;
-    char *ignore = " ";
-    char cmd_line_str[255] = {'\0'};
+static void accept_command(ProgEnv *env) {
+    int argc = 0;
+    char **argv, *ignore = " ", cmd_line_str[MAX_CMD_LEN] = {'\0'};
 
     while (TRUE) {
         printf("Please input the command:\n");
@@ -132,17 +123,14 @@ accept_command(ProgEnv *env) {
             if (NULL != argv && 0 < argc) {
                 decode_command(argc, argv, env);
             }
-
             memset(cmd_line_str, 0, 255);
             argv_destroy(argv);
         }
     }
 }
 
-static void
-init_conv(ProgEnv *env) {
-    const char *prev_locale;
-    const char *locale_codeset;
+static void init_conv(ProgEnv *env) {
+    const char *prev_locale, *locale_codeset;
 
     prev_locale = setlocale(LC_CTYPE, "");
     locale_codeset = locale_charset();
@@ -152,8 +140,7 @@ init_conv(ProgEnv *env) {
     env->from_alpha_conv = iconv_open(locale_codeset, ALPHA_ENC);
 }
 
-static size_t
-conv_to_alpha(ProgEnv *env, const char *in, AlphaChar *out, size_t out_size) {
+static size_t conv_to_alpha(ProgEnv *env, const char *in, AlphaChar *out, size_t out_size) {
     char *in_p = (char *) in;
     char *out_p = (char *) out;
     size_t in_left = strlen(in);
@@ -163,22 +150,14 @@ conv_to_alpha(ProgEnv *env, const char *in, AlphaChar *out, size_t out_size) {
 
     assert(sizeof (AlphaChar) == 4);
 
-    /* convert to UCS-4LE */
-    res = iconv(env->to_alpha_conv, (char **) &in_p, &in_left,
-            &out_p, &out_left);
+    res = iconv(env->to_alpha_conv, (char **) &in_p, &in_left, &out_p, &out_left);
 
     if (res < 0)
         return res;
 
-    /* convert UCS-4LE to AlphaChar string */
     res = 0;
-    for (byte_p = (const unsigned char *) out;
-            res < out_size && byte_p + 3 < (unsigned char*) out_p;
-            byte_p += 4) {
-        out[res++] = byte_p[0]
-                | (byte_p[1] << 8)
-                | (byte_p[2] << 16)
-                | (byte_p[3] << 24);
+    for (byte_p = (const unsigned char *) out; res < out_size && byte_p + 3 < (unsigned char*) out_p; byte_p += 4) {
+        out[res++] = byte_p[0] | (byte_p[1] << 8) | (byte_p[2] << 16) | (byte_p[3] << 24);
     }
     if (res < out_size) {
         out[res] = 0;
@@ -187,17 +166,14 @@ conv_to_alpha(ProgEnv *env, const char *in, AlphaChar *out, size_t out_size) {
     return res;
 }
 
-static size_t
-conv_from_alpha(ProgEnv *env, const AlphaChar *in, char *out, size_t out_size) {
-    size_t in_left = alpha_char_strlen(in) * sizeof (AlphaChar);
+static size_t conv_from_alpha(ProgEnv *env, const AlphaChar *in, char *out, size_t out_size) {
     size_t res;
+    size_t in_left = alpha_char_strlen(in) * sizeof (AlphaChar);
 
     assert(sizeof (AlphaChar) == 4);
 
-    /* convert AlphaChar to UCS-4LE */
     for (res = 0; in[res]; res++) {
         unsigned char b[4];
-
         b[0] = in[res] & 0xff;
         b[1] = (in[res] >> 8) & 0xff;
         b[2] = (in[res] >> 16) & 0xff;
@@ -206,34 +182,28 @@ conv_from_alpha(ProgEnv *env, const AlphaChar *in, char *out, size_t out_size) {
         memcpy((char *) &in[res], b, 4);
     }
 
-    /* convert UCS-4LE to locale codeset */
-    res = iconv(env->from_alpha_conv, (char **) &in, &in_left,
-            &out, &out_size);
+    res = iconv(env->from_alpha_conv, (char **) &in, &in_left, &out, &out_size);
     *out = 0;
 
     return res;
 }
 
-static void
-close_conv(ProgEnv *env) {
+static void close_conv(ProgEnv *env) {
     iconv_close(env->to_alpha_conv);
     iconv_close(env->from_alpha_conv);
 }
 
-static int
-prepare_trie(ProgEnv *env) {
-    char buff[256];
+static int prepare_trie(ProgEnv *env) {
+    char buff[FILE_NAME_LEN] = {'\0'};
 
-    snprintf(buff, sizeof (buff),
-            "%s/%s.tri", env->path, env->trie_name);
+    snprintf(buff, sizeof (buff), "%s/%s.tri", env->path, env->trie_name);
     env->trie = trie_new_from_file(buff);
 
     if (!env->trie) {
         FILE *sbm;
         AlphaMap *alpha_map;
 
-        snprintf(buff, sizeof (buff),
-                "%s/%s.abm", env->path, env->trie_name);
+        snprintf(buff, sizeof (buff), "%s/%s.abm", env->path, env->trie_name);
         sbm = fopen(buff, "r");
         if (!sbm) {
             fprintf(stderr, "Cannot open alphabet map file %s\n", buff);
@@ -244,11 +214,6 @@ prepare_trie(ProgEnv *env) {
 
         while (fgets(buff, sizeof (buff), sbm)) {
             int b, e;
-
-            /* read the range
-             * format: [b,e]
-             * where: b = begin char, e = end char; both in hex values
-             */
             if (sscanf(buff, " [ %x , %x ] ", &b, &e) != 2)
                 continue;
             if (b > e) {
@@ -268,13 +233,11 @@ prepare_trie(ProgEnv *env) {
     return 0;
 }
 
-static int
-close_trie(ProgEnv *env) {
+static int close_trie(ProgEnv *env) {
     if (trie_is_dirty(env->trie)) {
-        char path[256];
+        char path[FILE_NAME_LEN] = {'\0'};
 
-        snprintf(path, sizeof (path),
-                "%s/%s.tri", env->path, env->trie_name);
+        snprintf(path, sizeof (path), "%s/%s.tri", env->path, env->trie_name);
         if (trie_save(env->trie, path) != 0) {
             fprintf(stderr, "Cannot save trie to %s\n", path);
             return -1;
@@ -285,20 +248,16 @@ close_trie(ProgEnv *env) {
     return 0;
 }
 
-static int
-decode_switch(int argc, char *argv[], ProgEnv *env) {
-    int opt_idx;
+static int decode_switch(int argc, char *argv[], ProgEnv *env) {
+    int opt_idx = 0;
 
     for (opt_idx = 1; opt_idx < argc && *argv[opt_idx] == '-'; opt_idx++) {
-        if (strcmp(argv[opt_idx], "-h") == 0 ||
-                strcmp(argv[opt_idx], "--help") == 0) {
+        if (strcmp(argv[opt_idx], "-h") == 0 || strcmp(argv[opt_idx], "--help") == 0) {
             usage(argv[0], EXIT_FAILURE);
-        } else if (strcmp(argv[opt_idx], "-V") == 0 ||
-                strcmp(argv[opt_idx], "--version") == 0) {
+        } else if (strcmp(argv[opt_idx], "-V") == 0 || strcmp(argv[opt_idx], "--version") == 0) {
             printf("%s\n", VERSION);
             exit(EXIT_FAILURE);
-        } else if (strcmp(argv[opt_idx], "-p") == 0 ||
-                strcmp(argv[opt_idx], "--path") == 0) {
+        } else if (strcmp(argv[opt_idx], "-p") == 0 || strcmp(argv[opt_idx], "--path") == 0) {
             env->path = argv[++opt_idx];
         } else if (strcmp(argv[opt_idx], "--") == 0) {
             ++opt_idx;
@@ -312,9 +271,8 @@ decode_switch(int argc, char *argv[], ProgEnv *env) {
     return opt_idx;
 }
 
-static int
-decode_command(int argc, char *argv[], ProgEnv *env) {
-    int opt_idx;
+static int decode_command(int argc, char *argv[], ProgEnv *env) {
+    int opt_idx = 0;
 
     for (opt_idx = 0; opt_idx < argc; opt_idx++) {
         if (strcmp(argv[opt_idx], "add") == 0) {
@@ -347,42 +305,65 @@ decode_command(int argc, char *argv[], ProgEnv *env) {
     return EXIT_SUCCESS;
 }
 
-static int
-command_add(int argc, char *argv[], ProgEnv *env) {
-    int opt_idx;
-
-    opt_idx = 0;
+static int command_add(int argc, char *argv[], ProgEnv *env) {
+    int opt_idx = 0;
     while (opt_idx < argc) {
-        const char *key;
-        AlphaChar key_alpha[256];
-        TrieData data;
+        TrieData data_val = TRIE_DATA_ERROR;
+        const unsigned char *ori_word = NULL, *replace_word = NULL;
+        int ori_word_alpha_len = 0, replace_word_alpha_len = 0;
+        AlphaChar *p = NULL, *q = NULL, ori_word_alpha[MAX_WORD_LEN] = {0}, replace_word_alpha[MAX_WORD_LEN] = {0};
 
-        key = argv[opt_idx++];
-        data = (opt_idx < argc) ? atoi(argv[opt_idx++]) : TRIE_DATA_ERROR;
+        ori_word = argv[opt_idx++];
+        replace_word = argv[opt_idx++];
 
-        conv_to_alpha(env, key, key_alpha, N_ELEMENTS(key_alpha));
-        if (!trie_store(env->trie, key_alpha, data)) {
-            fprintf(stderr, "Failed to add entry '%s' with data %d\n",
-                    key, data);
+        conv_to_alpha(env, ori_word, ori_word_alpha, N_ELEMENTS(ori_word_alpha));
+
+        data_val = (TrieData) utarray_len(env->replace_words);
+
+        if (trie_store(env->trie, ori_word_alpha, data_val)) {
+            word_pair word_data;
+            ori_word_alpha_len = alpha_char_strlen(ori_word_alpha);
+            word_data.ori_str.len = ori_word_alpha_len;
+            word_data.ori_str.data = (AlphaChar *) calloc(ori_word_alpha_len + 1, sizeof (AlphaChar));
+            p = word_data.ori_str.data;
+            q = ori_word_alpha;
+            while (ori_word_alpha_len > 0) {
+                *p = *q;
+                p++;
+                q++;
+                ori_word_alpha_len--;
+            }
+
+            conv_to_alpha(env, replace_word, replace_word_alpha, N_ELEMENTS(replace_word_alpha));
+            replace_word_alpha_len = alpha_char_strlen(replace_word_alpha);
+            word_data.replace_str.len = replace_word_alpha_len;
+            word_data.replace_str.data = (AlphaChar *) calloc(replace_word_alpha_len + 1, sizeof (AlphaChar));
+            p = word_data.replace_str.data;
+            q = replace_word_alpha;
+            while (replace_word_alpha_len > 0) {
+                *p = *q;
+                p++;
+                q++;
+                replace_word_alpha_len--;
+            }
+
+            utarray_push_back(env->replace_words, &word_data);
         }
     }
 
     return opt_idx;
 }
 
-static int
-command_add_list(int argc, char *argv[], ProgEnv *env) {
-    const char *enc_name, *input_name;
-    int opt_idx;
-    iconv_t saved_conv;
-    FILE *input;
-    unsigned char line[256];
+static int command_add_list(int argc, char *argv[], ProgEnv *env) {
+    int opt_idx = 0;
+    const char *enc_name = NULL, *input_name = NULL;
 
-    enc_name = 0;
-    opt_idx = 0;
+    FILE *input;
+    iconv_t saved_conv;
+    unsigned char line[MAX_LINE_LEN] = {'\0'};
+
     saved_conv = env->to_alpha_conv;
-    if (strcmp(argv[0], "-e") == 0 ||
-            strcmp(argv[0], "--encoding") == 0) {
+    if (strcmp(argv[0], "-e") == 0 || strcmp(argv[0], "--encoding") == 0) {
         if (++opt_idx >= argc) {
             fprintf(stderr, "add-list option \"%s\" requires encoding name", argv[0]);
             return opt_idx;
@@ -412,11 +393,7 @@ command_add_list(int argc, char *argv[], ProgEnv *env) {
     }
 
     while (fgets(line, sizeof line, input)) {
-        TrieData data_val;
         unsigned char *ori_word, *replace_word;
-        int ori_word_alpha_len, replace_word_alpha_len;
-        AlphaChar *p, *q, ori_word_alpha[MAX_WORD_LEN] = {0}, replace_word_alpha[MAX_WORD_LEN] = {0};
-
         ori_word = string_trim(line);
         if ('\0' != *ori_word) {
             for (replace_word = ori_word; *replace_word && !strchr("\t,", *replace_word); ++replace_word)
@@ -426,40 +403,8 @@ command_add_list(int argc, char *argv[], ProgEnv *env) {
                 while (isspace(*replace_word))
                     ++replace_word;
             }
-
-            conv_to_alpha(env, ori_word, ori_word_alpha, N_ELEMENTS(ori_word_alpha));
-
-            data_val = (TrieData) utarray_len(env->replace_words);
-
-            if (trie_store(env->trie, ori_word_alpha, data_val)) {
-                word_pair word_data;
-                ori_word_alpha_len = alpha_char_strlen(ori_word_alpha);
-                word_data.ori_str.len = ori_word_alpha_len;
-                word_data.ori_str.data = (AlphaChar *) calloc(ori_word_alpha_len + 1, sizeof (AlphaChar));
-                p = word_data.ori_str.data;
-                q = ori_word_alpha;
-                while (ori_word_alpha_len > 0) {
-                    *p = *q;
-                    p++;
-                    q++;
-                    ori_word_alpha_len--;
-                }
-
-                conv_to_alpha(env, replace_word, replace_word_alpha, N_ELEMENTS(replace_word_alpha));
-                replace_word_alpha_len = alpha_char_strlen(replace_word_alpha);
-                word_data.replace_str.len = replace_word_alpha_len;
-                word_data.replace_str.data = (AlphaChar *) calloc(replace_word_alpha_len + 1, sizeof (AlphaChar));
-                p = word_data.replace_str.data;
-                q = replace_word_alpha;
-                while (replace_word_alpha_len > 0) {
-                    *p = *q;
-                    p++;
-                    q++;
-                    replace_word_alpha_len--;
-                }
-
-                utarray_push_back(env->replace_words, &word_data);
-            }
+            char *argv[] = {ori_word, replace_word};
+            command_add(2, argv, env);
         }
     }
 
@@ -474,24 +419,36 @@ exit_iconv_openned:
     return opt_idx;
 }
 
-static int
-command_delete(int argc, char *argv[], ProgEnv *env) {
-    int opt_idx;
+static int command_delete(int argc, char *argv[], ProgEnv *env) {
+    int opt_idx = 0;
 
     for (opt_idx = 0; opt_idx < argc; opt_idx++) {
-        AlphaChar key_alpha[256];
+        word_pair *word_data = NULL;
+        TrieData data = TRIE_DATA_ERROR;
+        AlphaChar word_alpha[MAX_WORD_LEN] = {0};
 
-        conv_to_alpha(env, argv[opt_idx], key_alpha, N_ELEMENTS(key_alpha));
-        if (!trie_delete(env->trie, key_alpha)) {
-            fprintf(stderr, "No entry '%s'. Not deleted.\n", argv[opt_idx]);
+        conv_to_alpha(env, argv[opt_idx], word_alpha, N_ELEMENTS(word_alpha));
+
+        if (!trie_retrieve(env->trie, word_alpha, &data)) {
+            continue;
+        }
+
+        if ((int) data < 0) {
+            continue;
+        }
+
+        if (trie_delete(env->trie, word_alpha)) {
+            word_data = (word_pair*) utarray_eltptr(env->replace_words, (int) data);
+            free(word_data->ori_str.data);
+            free(word_data->replace_str.data);
+            word_data = NULL;
         }
     }
 
     return opt_idx;
 }
 
-static int
-command_delete_list(int argc, char *argv[], ProgEnv *env) {
+static int command_delete_list(int argc, char *argv[], ProgEnv *env) {
     const char *enc_name, *input_name;
     int opt_idx;
     iconv_t saved_conv;
@@ -501,11 +458,9 @@ command_delete_list(int argc, char *argv[], ProgEnv *env) {
     enc_name = 0;
     opt_idx = 0;
     saved_conv = env->to_alpha_conv;
-    if (strcmp(argv[0], "-e") == 0 ||
-            strcmp(argv[0], "--encoding") == 0) {
+    if (strcmp(argv[0], "-e") == 0 || strcmp(argv[0], "--encoding") == 0) {
         if (++opt_idx >= argc) {
-            fprintf(stderr, "delete-list option \"%s\" requires encoding name",
-                    argv[0]);
+            fprintf(stderr, "delete-list option \"%s\" requires encoding name", argv[0]);
             return opt_idx;
         }
         enc_name = argv[opt_idx++];
@@ -519,9 +474,7 @@ command_delete_list(int argc, char *argv[], ProgEnv *env) {
     if (enc_name) {
         iconv_t conv = iconv_open(ALPHA_ENC, enc_name);
         if ((iconv_t) - 1 == conv) {
-            fprintf(stderr,
-                    "Conversion from \"%s\" to \"%s\" is not supported.\n",
-                    enc_name, ALPHA_ENC);
+            fprintf(stderr, "Conversion from \"%s\" to \"%s\" is not supported.\n", enc_name, ALPHA_ENC);
             return opt_idx;
         }
 
@@ -530,8 +483,7 @@ command_delete_list(int argc, char *argv[], ProgEnv *env) {
 
     input = fopen(input_name, "r");
     if (!input) {
-        fprintf(stderr, "delete-list: Cannot open input file \"%s\"\n",
-                input_name);
+        fprintf(stderr, "delete-list: Cannot open input file \"%s\"\n", input_name);
         goto exit_iconv_openned;
     }
 
@@ -540,11 +492,25 @@ command_delete_list(int argc, char *argv[], ProgEnv *env) {
 
         p = string_trim(line);
         if ('\0' != *p) {
-            AlphaChar key_alpha[256];
+            word_pair *word_data = NULL;
+            TrieData data = TRIE_DATA_ERROR;
+            AlphaChar word_alpha[MAX_WORD_LEN] = {0};
 
-            conv_to_alpha(env, p, key_alpha, N_ELEMENTS(key_alpha));
-            if (!trie_delete(env->trie, key_alpha)) {
-                fprintf(stderr, "No entry '%s'. Not deleted.\n", p);
+            conv_to_alpha(env, p, word_alpha, N_ELEMENTS(word_alpha));
+
+            if (!trie_retrieve(env->trie, word_alpha, &data)) {
+                continue;
+            }
+
+            if ((int) data < 0) {
+                continue;
+            }
+
+            if (trie_delete(env->trie, word_alpha)) {
+                word_data = (word_pair*) utarray_eltptr(env->replace_words, (int) data);
+                free(word_data->ori_str.data);
+                free(word_data->replace_str.data);
+                word_data = NULL;
             }
         }
     }
@@ -560,19 +526,24 @@ exit_iconv_openned:
     return opt_idx;
 }
 
-static int
-command_query(int argc, char *argv[], ProgEnv *env) {
-    AlphaChar key_alpha[256];
+static int command_query(int argc, char *argv[], ProgEnv *env) {
     TrieData data;
+    word_pair *p_word_pair = NULL;
+    char replace_word[MAX_WORD_LEN] = {'\0'};
+    AlphaChar ori_word_alpha[MAX_WORD_LEN] = {0};
 
     if (argc == 0) {
         fprintf(stderr, "query: No key specified.\n");
         return 0;
     }
 
-    conv_to_alpha(env, argv[0], key_alpha, N_ELEMENTS(key_alpha));
-    if (trie_retrieve(env->trie, key_alpha, &data)) {
-        printf("%d\n", data);
+    conv_to_alpha(env, argv[0], ori_word_alpha, N_ELEMENTS(ori_word_alpha));
+    if (trie_retrieve(env->trie, ori_word_alpha, &data)) {
+        p_word_pair = (word_pair*) utarray_eltptr(env->replace_words, (int) data);
+        if (p_word_pair != NULL) {
+            conv_from_alpha(env, p_word_pair->replace_str.data, replace_word, N_ELEMENTS(replace_word));
+        }
+        printf("%s\t%d\t%s\n", argv[0], data, replace_word);
     } else {
         fprintf(stderr, "query: Key '%s' not found.\n", argv[0]);
     }
@@ -580,24 +551,29 @@ command_query(int argc, char *argv[], ProgEnv *env) {
     return 1;
 }
 
-static Bool
-list_enum_func(const AlphaChar *key, TrieData key_data, void *user_data) {
+static Bool list_enum_func(const AlphaChar *key, TrieData key_data, void *user_data) {
+    word_pair *p_word_pair = NULL;
     ProgEnv *env = (ProgEnv *) user_data;
-    char key_locale[1024];
+    char ori_word[MAX_WORD_LEN] = {'\0'}, replace_word[MAX_WORD_LEN] = {'\0'};
 
-    conv_from_alpha(env, key, key_locale, N_ELEMENTS(key_locale));
-    printf("%s\t%d\n", key_locale, key_data);
+    conv_from_alpha(env, key, ori_word, N_ELEMENTS(ori_word));
+
+    p_word_pair = (word_pair*) utarray_eltptr(env->replace_words, (int) key_data);
+
+    if (p_word_pair != NULL) {
+        conv_from_alpha(env, p_word_pair->replace_str.data, replace_word, N_ELEMENTS(replace_word));
+    }
+
+    printf("%s\t%d\t%s\n", ori_word, key_data, replace_word);
     return TRUE;
 }
 
-static int
-command_list(int argc, char *argv[], ProgEnv *env) {
+static int command_list(int argc, char *argv[], ProgEnv *env) {
     trie_enumerate(env->trie, list_enum_func, (void *) env);
     return 0;
 }
 
-static int
-command_replace(int argc, char *argv[], ProgEnv *env) {
+static int command_replace(int argc, char *argv[], ProgEnv *env) {
     TrieState *s;
     int data, offset, flag;
     const AlphaChar *p, *tmp;
@@ -633,7 +609,7 @@ command_replace(int argc, char *argv[], ProgEnv *env) {
                 p_word_pair = (word_pair*) utarray_eltptr(env->replace_words, data);
                 if (p_word_pair != NULL) {
                     offset = tmp - text_alpha;
-                    flag = text_alpha_replace_word(text_alpha, p_word_pair, offset);
+                    flag = text_alpha_replace(text_alpha, p_word_pair, offset);
                     tmp = tmp + (flag - 1);
                 } else {
                     fprintf(stderr, "Replace:Find word but not found in dynamic[%d] arrays.\n", data);
@@ -644,15 +620,14 @@ command_replace(int argc, char *argv[], ProgEnv *env) {
         tmp++;
     }
 
-    char text_locale[256];
+    char text_locale[MAX_TEXT_LEN];
     conv_from_alpha(env, text_alpha, text_locale, N_ELEMENTS(text_locale));
     fprintf(stderr, "%s\n", text_locale);
     return 1;
 
 }
 
-static int
-text_alpha_replace_word(AlphaChar *text_alpha, const word_pair *word_pair, const int offset) {
+static int text_alpha_replace(AlphaChar *text_alpha, const word_pair *word_pair, const int offset) {
     AlphaChar *p, *q;
     int flag, text_alpha_length;
 
@@ -695,8 +670,7 @@ text_alpha_replace_word(AlphaChar *text_alpha, const word_pair *word_pair, const
     return word_pair->replace_str.len;
 }
 
-static void
-usage(const char *prog_name, int exit_status) {
+static void usage(const char *prog_name, int exit_status) {
     printf("%s - double-array trie manipulator\n", prog_name);
     printf("Usage: %s [OPTION]... TRIE CMD ARG ...\n", prog_name);
     printf(
@@ -727,8 +701,7 @@ usage(const char *prog_name, int exit_status) {
     exit(exit_status);
 }
 
-static char *
-string_trim(char *s) {
+static char *string_trim(char *s) {
     char *p;
 
     /* skip leading white spaces */
@@ -743,7 +716,3 @@ string_trim(char *s) {
 
     return s;
 }
-
-/*
-vi:ts=4:ai:expandtab
- */
