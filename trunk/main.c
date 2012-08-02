@@ -304,43 +304,21 @@ static int command_add(int argc, char *argv[], ProgEnv *env) {
     int opt_idx = 0;
     while (opt_idx < argc) {
         TrieData data_val;
-        const unsigned char *ori_word, *replace_word;
-        int ori_word_alpha_len, replace_word_alpha_len;
-        AlphaChar *p, *q, ori_word_alpha[MAX_WORD_LEN], replace_word_alpha[MAX_WORD_LEN];
-
-        ori_word = argv[opt_idx++];
-        replace_word = argv[opt_idx++];
-
-        conv_to_alpha(env, ori_word, ori_word_alpha, N_ELEMENTS(ori_word_alpha));
+        AlphaChar ori_word_alpha[MAX_WORD_LEN], replace_word_alpha[MAX_WORD_LEN];
 
         data_val = (TrieData) utarray_len(env->replace_words);
+        conv_to_alpha(env, argv[opt_idx++], ori_word_alpha, N_ELEMENTS(ori_word_alpha));
 
         if (trie_store(env->trie, ori_word_alpha, data_val)) {
             word_pair word_data;
-            ori_word_alpha_len = alpha_char_strlen(ori_word_alpha);
-            word_data.ori_str.len = ori_word_alpha_len;
-            word_data.ori_str.data = (AlphaChar *) calloc(ori_word_alpha_len + 1, sizeof (AlphaChar));
-            p = word_data.ori_str.data;
-            q = ori_word_alpha;
-            while (ori_word_alpha_len > 0) {
-                *p = *q;
-                p++;
-                q++;
-                ori_word_alpha_len--;
-            }
+            word_data.ori_str.len = alpha_char_strlen(ori_word_alpha);
+            word_data.ori_str.data = (AlphaChar *) calloc(word_data.ori_str.len + 1, sizeof (AlphaChar));
+            memcpy(word_data.ori_str.data, ori_word_alpha, (word_data.ori_str.len + 1) * sizeof (AlphaChar));
 
-            conv_to_alpha(env, replace_word, replace_word_alpha, N_ELEMENTS(replace_word_alpha));
-            replace_word_alpha_len = alpha_char_strlen(replace_word_alpha);
-            word_data.replace_str.len = replace_word_alpha_len;
-            word_data.replace_str.data = (AlphaChar *) calloc(replace_word_alpha_len + 1, sizeof (AlphaChar));
-            p = word_data.replace_str.data;
-            q = replace_word_alpha;
-            while (replace_word_alpha_len > 0) {
-                *p = *q;
-                p++;
-                q++;
-                replace_word_alpha_len--;
-            }
+            conv_to_alpha(env, argv[opt_idx++], replace_word_alpha, N_ELEMENTS(replace_word_alpha));
+            word_data.replace_str.len = alpha_char_strlen(replace_word_alpha);
+            word_data.replace_str.data = (AlphaChar *) calloc(word_data.replace_str.len + 1, sizeof (AlphaChar));
+            memcpy(word_data.replace_str.data, replace_word_alpha, (word_data.replace_str.len + 1) * sizeof (AlphaChar));
 
             utarray_push_back(env->replace_words, &word_data);
         }
@@ -629,12 +607,11 @@ static int text_alpha_replace(AlphaChar *text_alpha, const word_pair *word_pair,
 
     if (flag > 0) {
         text_alpha_length = alpha_char_strlen(text_alpha);
-        if (text_alpha_length == MAX_TEXT_LEN || text_alpha_length + flag > MAX_TEXT_LEN) {
-            fprintf(stderr, "Array index out of bounds.\n");
-        }
+        if (text_alpha_length + flag > MAX_TEXT_LEN)
+            return word_pair->ori_str.len;
         p = text_alpha + (text_alpha_length + flag - 1);
         q = text_alpha + (text_alpha_length - 1);
-        int num = text_alpha_length - (offset + word_pair->ori_str.len);
+        int num = text_alpha_length - offset - word_pair->ori_str.len;
         while (num > 0) {
             *p = *q;
             p--;
@@ -672,24 +649,6 @@ static void usage(const char *prog_name, int exit_status) {
             "  -p, --path DIR           set trie directory to DIR [default=.]\n"
             "  -h, --help               display this help and exit\n"
             "  -V, --version            output version information and exit\n"
-            "\n"
-            "Commands:\n"
-            "  add  WORD DATA ...\n"
-            "      Add WORD with DATA to trie\n"
-            "  add-list [OPTION] LISTFILE\n"
-            "      Add words and data listed in LISTFILE to trie\n"
-            "      Options:\n"
-            "          -e, --encoding ENC    specify character encoding of LISTFILE\n"
-            "  delete WORD ...\n"
-            "      Delete WORD from trie\n"
-            "  delete-list [OPTION] LISTFILE\n"
-            "      Delete words listed in LISTFILE from trie\n"
-            "      Options:\n"
-            "          -e, --encoding ENC    specify character encoding of LISTFILE\n"
-            "  query WORD\n"
-            "      Query WORD data from trie\n"
-            "  list\n"
-            "      List all words in trie\n"
             );
 
     exit(exit_status);
@@ -722,11 +681,9 @@ static void command_usage() {
 static char *string_trim(char *s) {
     char *p;
 
-    /* skip leading white spaces */
     while (*s && isspace(*s))
         ++s;
 
-    /* trim trailing white spaces */
     p = s + strlen(s) - 1;
     while (isspace(*p))
         --p;
