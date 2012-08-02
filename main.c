@@ -73,13 +73,15 @@ static void usage(const char *prog_name, int exit_status);
 
 static char *string_trim(char *s);
 
+static void command_usage();
+
 static void accept_command(ProgEnv *env);
 
 static int text_alpha_replace(AlphaChar *text_alpha, const word_pair *word_pair, const int offset);
 
 int main(int argc, char *argv[]) {
     ProgEnv env;
-    int i, ret;
+    int i = 0, ret = 0;
 
     env.path = ".";
 
@@ -97,8 +99,6 @@ int main(int argc, char *argv[]) {
     UT_icd word_pair_icd = {sizeof (word_pair), NULL, NULL, NULL};
     utarray_new(env.replace_words, &word_pair_icd);
 
-    ret = decode_command(argc - i, argv + i, &env);
-
     accept_command(&env);
 
     if (close_trie(&env) != 0)
@@ -110,7 +110,7 @@ int main(int argc, char *argv[]) {
 }
 
 static void accept_command(ProgEnv *env) {
-    int argc;
+    int argc = 0;
     char **argv, *ignore = " ", cmd_line_str[MAX_CMD_LEN];
 
     while (TRUE) {
@@ -120,10 +120,7 @@ static void accept_command(ProgEnv *env) {
             continue;
 
         argv = argv_create(cmd_line_str, ignore, &argc);
-        if (NULL != argv && 0 < argc) {
-            decode_command(argc, argv, env);
-        }
-
+        decode_command(argc, argv, env);
         argv_destroy(argv);
     }
 }
@@ -296,8 +293,7 @@ static int decode_command(int argc, char *argv[], ProgEnv *env) {
             ++opt_idx;
             opt_idx += command_replace(argc - opt_idx, argv + opt_idx, env);
         } else {
-            fprintf(stderr, "Unknown command: %s\n", argv[opt_idx]);
-            return EXIT_FAILURE;
+            command_usage();
         }
     }
 
@@ -305,12 +301,12 @@ static int decode_command(int argc, char *argv[], ProgEnv *env) {
 }
 
 static int command_add(int argc, char *argv[], ProgEnv *env) {
-    int opt_idx;
+    int opt_idx = 0;
     while (opt_idx < argc) {
-        TrieData data_val = TRIE_DATA_ERROR;
-        const unsigned char *ori_word = NULL, *replace_word = NULL;
-        int ori_word_alpha_len = 0, replace_word_alpha_len = 0;
-        AlphaChar *p = NULL, *q = NULL, ori_word_alpha[MAX_WORD_LEN] = {0}, replace_word_alpha[MAX_WORD_LEN] = {0};
+        TrieData data_val;
+        const unsigned char *ori_word, *replace_word;
+        int ori_word_alpha_len, replace_word_alpha_len;
+        AlphaChar *p, *q, ori_word_alpha[MAX_WORD_LEN], replace_word_alpha[MAX_WORD_LEN];
 
         ori_word = argv[opt_idx++];
         replace_word = argv[opt_idx++];
@@ -355,11 +351,11 @@ static int command_add(int argc, char *argv[], ProgEnv *env) {
 
 static int command_add_list(int argc, char *argv[], ProgEnv *env) {
     int opt_idx = 0;
-    const char *enc_name, *input_name;
+    const char *enc_name = NULL, *input_name;
 
     FILE *input;
     iconv_t saved_conv;
-    unsigned char line[MAX_LINE_LEN];
+    unsigned char line[MAX_LINE_LEN] = {'\0'};
 
     saved_conv = env->to_alpha_conv;
     if (strcmp(argv[0], "-e") == 0 || strcmp(argv[0], "--encoding") == 0) {
@@ -448,7 +444,7 @@ static int command_delete(int argc, char *argv[], ProgEnv *env) {
 }
 
 static int command_delete_list(int argc, char *argv[], ProgEnv *env) {
-    const char *enc_name, *input_name;
+    const char *enc_name = NULL, *input_name;
     int opt_idx;
     iconv_t saved_conv;
     FILE *input;
@@ -551,7 +547,7 @@ static int command_query(int argc, char *argv[], ProgEnv *env) {
 }
 
 static Bool list_enum_func(const AlphaChar *key, TrieData key_data, void *user_data) {
-    word_pair *p_word_pair = NULL;
+    word_pair *p_word_pair;
     ProgEnv *env = (ProgEnv *) user_data;
     char ori_word[MAX_WORD_LEN], replace_word[MAX_WORD_LEN];
 
@@ -603,7 +599,7 @@ static int command_replace(int argc, char *argv[], ProgEnv *env) {
         }
         if (trie_state_is_terminal(s)) {
             data = (int) trie_state_get_data(s);
-            if (data) {
+            if (data >= 0) {
                 p_word_pair = (word_pair*) utarray_eltptr(env->replace_words, data);
                 if (p_word_pair != NULL) {
                     offset = tmp - text_alpha;
@@ -670,7 +666,7 @@ static int text_alpha_replace(AlphaChar *text_alpha, const word_pair *word_pair,
 
 static void usage(const char *prog_name, int exit_status) {
     printf("%s - double-array trie manipulator\n", prog_name);
-    printf("Usage: %s [OPTION]... TRIE CMD ARG ...\n", prog_name);
+    printf("Usage: %s [OPTION]... TRIE\n", prog_name);
     printf(
             "Options:\n"
             "  -p, --path DIR           set trie directory to DIR [default=.]\n"
@@ -697,6 +693,30 @@ static void usage(const char *prog_name, int exit_status) {
             );
 
     exit(exit_status);
+}
+
+static void command_usage() {
+    printf(
+            "Commands:\n"
+            "  add  WORD DATA ...\n"
+            "      Add WORD with DATA to trie\n"
+            "  add-list [OPTION] LISTFILE\n"
+            "      Add words and data listed in LISTFILE to trie\n"
+            "      Options:\n"
+            "          -e, --encoding ENC    specify character encoding of LISTFILE\n"
+            "  delete WORD ...\n"
+            "      Delete WORD from trie\n"
+            "  delete-list [OPTION] LISTFILE\n"
+            "      Delete words listed in LISTFILE from trie\n"
+            "      Options:\n"
+            "          -e, --encoding ENC    specify character encoding of LISTFILE\n"
+            "  query WORD\n"
+            "      Query WORD data from trie\n"
+            "  replace TEXT\n"
+            "      Replace keywords data in text\n"
+            "  list\n"
+            "      List all words in trie\n"
+            );
 }
 
 static char *string_trim(char *s) {
